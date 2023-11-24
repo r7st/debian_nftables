@@ -38,6 +38,17 @@
       group: root
       mode: "0400"
 
+  - name: Block hosts
+    ansible.builtin.template:
+      src: templates/nftables.blocks.j2
+      dest: /etc/nftables/nftables.blocks
+      owner: root
+      group: root
+      mode: "0400"
+    when:
+      - nftables_block_hosts is defined
+      - nftables_block_hosts | length > 0
+
   - name: Standard configuration
     ansible.builtin.template:
       src: templates/standard.conf.j2

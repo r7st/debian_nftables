@@ -1,0 +1,5 @@
+# block hosts
+{% for block_host in nftables_block_hosts %}
+add rule ip filter INPUT ip saddr {{ block_host }} counter drop comment "block host"
+add rule ip filter OUTPUT ip daddr {{ block_host }} counter drop comment "block host"
+{% endfor %}
