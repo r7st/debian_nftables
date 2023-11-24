@@ -1,0 +1,65 @@
+---
+- name: Nftables asserts
+  ansible.builtin.assert:
+    that:
+      - ansible_facts['os_family'] == "Debian"
+      - nftables_dns_proto in [ "udp", "tcp" ]
+      - nftables_dns_port is number
+      - nftables_dhcp is boolean
+
+- name: Remove ufw
+  ansible.builtin.apt:
+    name: ufw
+    state: absent
+    purge: true
+
+- name: Install nftables
+  ansible.builtin.apt:
+    name: nftables
+    state: present
+    update_cache: true
+
+- name: Create nftables dir
+  ansible.builtin.file:
+    path: /etc/nftables
+    state: directory
+    owner: root
+    group: root
+    mode: "0700"
+
+- name: Configure nftables
+  notify: Restart nftables
+  block:
+  - name: Configure nftables primary
+    ansible.builtin.template:
+      src: templates/nftables.conf.j2
+      dest: /etc/nftables.conf
+      owner: root
+      group: root
+      mode: "0400"
+
+  - name: Standard configuration
+    ansible.builtin.template:
+      src: templates/standard.conf.j2
+      dest: /etc/nftables/standard.conf
+      owner: root
+      group: root
+      mode: "0400"
+
+  - name: Custom configuration
+    ansible.builtin.copy:
+      src: "{{ item }}"
+      dest: "/etc/nftables/{{ item | basename }}"
+      owner: root
+      group: root
+      mode: "0400"
+    with_items: "{{ nftables_custom_config }}"
+    when: 
+      - nftables_custom_config is defined
+      - nftables_custom_config | length > 0
+
+- name: Start and enable nftables
+  ansible.builtin.systemd:
+    name: nftables
+    state: started
+    enabled: true

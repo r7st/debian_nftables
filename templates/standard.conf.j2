@@ -1,0 +1,50 @@
+{% if nftables_ntp is defined %}
+define NTP = { {{ nftables_ntp }} }
+{% endif %}
+{% if nftables_dns is defined %}
+define DNS = { {{ nftables_dns }} }
+{% endif %}
+
+# loopback
+add rule ip filter INPUT iifname "lo" counter accept
+add rule ip filter OUTPUT oifname "lo" counter accept
+
+# ping in
+add rule ip filter INPUT icmp type echo-request ct state new,established limit rate 1/second burst 10 packets counter accept comment "ping in"
+add rule ip filter OUTPUT icmp type echo-reply ct state established limit rate 1/second burst 10 packets counter accept comment "ping in"
+
+# ping out
+add rule ip filter OUTPUT icmp type echo-request ct state new,established limit rate 1/second burst 10 packets counter accept comment "ping out"
+add rule ip filter INPUT icmp type echo-reply ct state established limit rate 1/second burst 10 packets counter accept comment "ping out"
+
+# ssh in
+add rule ip filter INPUT iifname $PIFACE ip daddr $PADDR tcp dport ssh ct state new,established counter accept comment "ssh in"
+add rule ip filter OUTPUT oifname $PIFACE ip saddr $PADDR tcp sport ssh ct state established counter accept comment "ssh in"
+
+# ntp out
+{% if nftables_ntp is defined %}
+add rule ip filter OUTPUT oifname $PIFACE ip saddr $PADDR ip daddr $NTP udp dport ntp ct state new,established counter accept comment "ntp out"
+add rule ip filter INPUT iifname $PIFACE ip daddr $PADDR ip saddr $NTP udp sport ntp ct state established counter accept comment "ntp out"
+{% else %}
+add rule ip filter OUTPUT oifname $PIFACE ip saddr $PADDR udp dport ntp ct state new,established counter accept comment "ntp out"
+add rule ip filter INPUT iifname $PIFACE ip daddr $PADDR udp sport ntp ct state established counter accept comment "ntp out"
+{% endif %}
+
+# dns out
+{% if nftables_dns is defined %}
+add rule ip filter OUTPUT oifname $PIFACE ip saddr $PADDR ip daddr $DNS tcp dport {{ nftables_dns_port }} ct state new,established counter accept comment "dns out"
+add rule ip filter INPUT iifname $PIFACE ip daddr $PADDR ip saddr $DNS tcp sport {{ nftables_dns_port }}  ct state established counter accept comment "dns out"
+{% else %}
+add rule ip filter OUTPUT oifname $PIFACE ip saddr $PADDR {{ nftables_dns_proto }} dport {{ nftables_dns_port }} ct state new,established counter accept comment "dns out"
+add rule ip filter INPUT iifname $PIFACE ip daddr $PADDR {{ nftables_dns_proto }} sport {{ nftables_dns_port }}  ct state established counter accept comment "dns out"
+{% endif %}
+
+# http(s) out
+add rule ip filter OUTPUT oifname $PIFACE ip saddr $PADDR tcp dport { http, https } ct state new,established counter accept comment "http(s) out"
+add rule ip filter INPUT iifname $PIFACE ip daddr $PADDR tcp sport { http, https } ct state established counter accept comment "http(s) out"
+{% if nftables_dhcp %}
+
+# dhcp out
+add rule ip filter OUTPUT oifname $PIFACE ip protocol udp ip saddr $PADDR udp dport { bootps, bootpc } ct state new,established counter accept comment "dhcp out"
+add rule ip filter INPUT iifname $PIFACE ip protocol udp ip daddr $PADDR udp sport { bootps, bootpc } ct state established counter accept comment "dhcp out"
+{% endif %}
