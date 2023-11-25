@@ -33,10 +33,10 @@ add rule ip filter INPUT iifname $PIFACE ip daddr $PADDR udp sport ntp ct state 
 # dns out
 {% if nftables_dns is defined %}
 add rule ip filter OUTPUT oifname $PIFACE ip saddr $PADDR ip daddr $DNS tcp dport {{ nftables_dns_port }} ct state new,established counter accept comment "dns out"
-add rule ip filter INPUT iifname $PIFACE ip daddr $PADDR ip saddr $DNS tcp sport {{ nftables_dns_port }}  ct state established counter accept comment "dns out"
+add rule ip filter INPUT iifname $PIFACE ip daddr $PADDR ip saddr $DNS tcp sport {{ nftables_dns_port }} ct state established counter accept comment "dns out"
 {% else %}
 add rule ip filter OUTPUT oifname $PIFACE ip saddr $PADDR {{ nftables_dns_proto }} dport {{ nftables_dns_port }} ct state new,established counter accept comment "dns out"
-add rule ip filter INPUT iifname $PIFACE ip daddr $PADDR {{ nftables_dns_proto }} sport {{ nftables_dns_port }}  ct state established counter accept comment "dns out"
+add rule ip filter INPUT iifname $PIFACE ip daddr $PADDR {{ nftables_dns_proto }} sport {{ nftables_dns_port }} ct state established counter accept comment "dns out"
 {% endif %}
 
 # http(s) out

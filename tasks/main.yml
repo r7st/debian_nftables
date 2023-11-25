@@ -4,7 +4,7 @@
     that:
       - ansible_facts['os_family'] == "Debian"
       - nftables_dns_proto in [ "udp", "tcp" ]
-      - nftables_dns_port is number
+      - nftables_dns_port is defined
       - nftables_dhcp is boolean
 
 - name: Remove ufw
