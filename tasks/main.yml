@@ -6,12 +6,24 @@
       - nftables_dns_proto in [ "udp", "tcp" ]
       - nftables_dns_port is defined
       - nftables_dhcp is boolean
+      - nftables_nat is boolean
 
 - name: Remove ufw
   ansible.builtin.apt:
     name: ufw
     state: absent
     purge: true
+    autoremove: true
+
+- name: Remove iptables
+  ansible.builtin.apt:
+    name: "{{ item }}"
+    state: absent
+    purge: true
+    autoremove: true
+  with_items:
+    - netfilter-persistent
+    - iptables-persistent
 
 - name: Install nftables
   ansible.builtin.apt:
