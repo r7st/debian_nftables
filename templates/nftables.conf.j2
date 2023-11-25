@@ -1,25 +1,10 @@
-# filter table
-add table ip filter
-flush table ip filter
-add chain ip filter INPUT { type filter hook input priority 0; policy accept; }
-add chain ip filter FORWARD { type filter hook forward priority 0; policy accept; }
-add chain ip filter OUTPUT { type filter hook output priority 0; policy accept; }
-add chain ip filter IN_REJ
-add chain ip filter FWD_REJ
-add chain ip filter OUT_REJ
-{% if nftables_nat %}
-
-# nat table
-add table ip nat
-flush table ip nat
-add chain ip nat PREROUTING { type nat hook prerouting priority 0; policy accept; }
-add chain ip nat POSTROUTING { type nat hook postrouting priority 0; policy accept; }
-{% endif %}
-
 # interfaces
 define RFC1918 = { 10.0.0.0/8, 172.16.0.0/12, 192.16.0.0/16 }
 define PIFACE = {{ ansible_default_ipv4.interface }} # primary interface
 define PADDR = {{ ansible_default_ipv4.address }} # primary iface ip
+
+### load chains ###
+include "/etc/nftables/nftables.chains"
 {% if nftables_block_hosts is defined %}
 
 ### block hosts ###
@@ -29,25 +14,5 @@ include "/etc/nftables/nftables.blocks"
 ### load custom ruleset ###
 include "/etc/nftables/*.conf"
 
-# default reject rfc1918 in
-add rule ip filter IN_REJ counter log prefix "FW-IR: "
-add rule ip filter IN_REJ counter reject
-add rule ip filter INPUT ip saddr $RFC1918 ct state new counter jump IN_REJ
-
-# default drop rfc1918 fwd
-add rule ip filter FWD_REJ counter log prefix "FW-FR: "
-add rule ip filter FWD_REJ counter reject
-add rule ip filter FORWARD ip saddr $RFC1918 ct state new counter jump FWD_REJ
-
-# default reject outbound (new)
-add rule ip filter OUT_REJ counter log prefix "FW-OR: "
-add rule ip filter OUT_REJ counter reject
-add rule ip filter OUTPUT ct state new counter jump OUT_REJ
-
-# default drop everything else
-add rule ip filter INPUT counter log prefix "FW-ID: "
-add rule ip filter INPUT counter drop
-add rule ip filter FORWARD counter log prefix "FW-FD: "
-add rule ip filter FORWARD counter drop
-add rule ip filter OUTPUT counter log prefix "FW-OD: "
-add rule ip filter OUTPUT counter drop
+### load drop rules ###
+include "/etc/nftables/nftables.drops"

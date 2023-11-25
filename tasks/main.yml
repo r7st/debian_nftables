@@ -8,20 +8,14 @@
       - nftables_dhcp is boolean
       - nftables_nat is boolean
 
-- name: Remove ufw
-  ansible.builtin.apt:
-    name: ufw
-    state: absent
-    purge: true
-    autoremove: true
-
-- name: Remove iptables
+- name: Remove ufw and iptables
   ansible.builtin.apt:
     name: "{{ item }}"
     state: absent
     purge: true
     autoremove: true
   with_items:
+    - ufw
     - netfilter-persistent
     - iptables-persistent
 
@@ -31,17 +25,17 @@
     state: present
     update_cache: true
 
-- name: Create nftables dir
-  ansible.builtin.file:
-    path: /etc/nftables
-    state: directory
-    owner: root
-    group: root
-    mode: "0700"
-
 - name: Configure nftables
   notify: Restart nftables
   block:
+  - name: Create nftables dir
+    ansible.builtin.file:
+      path: /etc/nftables
+      state: directory
+      owner: root
+      group: root
+      mode: "0700"
+
   - name: Configure nftables primary
     ansible.builtin.template:
       src: templates/nftables.conf.j2
@@ -63,11 +57,15 @@
 
   - name: Standard configuration
     ansible.builtin.template:
-      src: templates/standard.conf.j2
-      dest: /etc/nftables/standard.conf
+      src: "templates/{{ item }}.j2"
+      dest: "/etc/nftables/{{ item }}"
       owner: root
       group: root
       mode: "0400"
+    with_items:
+      - nftables.chains
+      - standard.conf
+      - nftables.drops
 
   - name: Custom configuration
     ansible.builtin.copy:
