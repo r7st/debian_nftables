@@ -1,7 +1,5 @@
-# interfaces
-define RFC1918 = { 10.0.0.0/8, 172.16.0.0/12, 192.16.0.0/16 }
-define PIFACE = {{ ansible_default_ipv4.interface }} # primary interface
-define PADDR = {{ ansible_default_ipv4.address }} # primary iface ip
+### load definitions ###
+include "/etc/nftables/nftables.defs"
 
 ### load chains ###
 include "/etc/nftables/nftables.chains"
