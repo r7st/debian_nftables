@@ -7,7 +7,7 @@ add chain ip filter OUTPUT { type filter hook output priority 0; policy accept; 
 add chain ip filter IN_REJ
 add chain ip filter FWD_REJ
 add chain ip filter OUT_REJ
-{% if nftables_nat %}
+{% if nftables_nat_rules is defined %}
 
 # nat table
 add table ip nat 

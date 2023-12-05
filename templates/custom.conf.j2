@@ -1,0 +1,43 @@
+# custom rules
+{% if nftables_nat_rules is defined %}
+{% for rule in nftables_nat_rules %}
+{{ rule }}
+{% endfor %}
+{% endif %}
+{% if nftables_filter is defined %}
+{% for rule in nftables_filter %}
+{% if rule['chain'] == "OUTPUT" %}
+add rule ip filter OUTPUT oifname {{ rule['iface'] }} ip daddr {{ rule['dest'] }} ip saddr {{ rule['src'] }} {{ rule['proto'] }} dport {{ rule['port'] }} ct state {{ rule['state'] }} counter accept comment "{{ rule['comment'] }}"
+{% elif rule['chain'] == "INPUT" %}
+add rule ip filter INPUT iifname {{ rule['iface'] }} ip saddr {{ rule['src'] }} ip daddr {{ rule['dest'] }} {{ rule['proto'] }} sport {{ rule['port'] }} ct state {{ rule['state'] }} counter accept comment "{{ rule['comment'] }}"
+{% elif rule['chain'] == "FORWARD" %}
+{% set FwdRule = "add rule ip filter FORWARD" %}
+{% if rule['iiface'] is defined %}
+{% set FwdRule = FwdRule ~ " iifname " ~ rule['iiface'] %}
+{% endif %}
+{% if rule['oiface'] is defined -%}
+{% set FwdRule = FwdRule ~ " oifname " ~ rule['oiface'] %}
+{% endif %}
+{% if rule['dest'] is defined -%}
+{% set FwdRule = FwdRule ~ " ip daddr " ~ rule['dest'] %}
+{% endif %}
+{% if rule['src'] is defined -%}
+{% set FwdRule = FwdRule ~ " ip saddr " ~ rule['src'] %}
+{% endif %}
+{% if rule['proto'] is defined -%}
+{% set FwdRule = FwdRule ~ " " ~ rule['proto'] %}
+{% endif %}
+{% if rule['dport'] is defined -%}
+{% set FwdRule = FwdRule ~ " dport " ~ rule['dport'] %}
+{% endif %}
+{% if rule['sport'] is defined -%}
+{% set FwdRule = FwdRule ~ " sport " ~ rule['sport'] %}
+{% endif %}
+{% if rule['state'] is defined -%}
+{% set FwdRule = FwdRule ~ " ct state " ~ rule['state'] %}
+{% endif %}
+{% set FwdRule = FwdRule ~ " counter accept comment \"" ~ rule['comment'] ~ "\"" %}
+{{ FwdRule }}
+{% endif %}
+{% endfor %}
+{% endif %}

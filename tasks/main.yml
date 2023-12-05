@@ -6,7 +6,6 @@
       - nftables_dns_proto in [ "udp", "tcp" ]
       - nftables_dns_port is defined
       - nftables_dhcp is boolean
-      - nftables_nat is boolean
 
 - name: Remove ufw and iptables
   ansible.builtin.apt:
@@ -75,7 +74,17 @@
       - standard.conf
       - nftables.drops
 
-  - name: Custom configuration
+  - name: Custom rules (defined)
+    ansible.builtin.template:
+      src: templates/custom.conf.j2
+      dest: /etc/nftables/custom.conf
+      owner: root
+      group: root
+      mode: "0400"
+    when: (nftables_filter is defined) or
+          (nftables_nat_rules is defined)
+
+  - name: Custom rules (files)
     ansible.builtin.copy:
       src: "{{ item }}"
       dest: "/etc/nftables/{{ item | basename }}"

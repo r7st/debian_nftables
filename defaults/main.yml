@@ -2,4 +2,3 @@
 nftables_dns_proto: udp
 nftables_dns_port: 53
 nftables_dhcp: true
-nftables_nat: false
