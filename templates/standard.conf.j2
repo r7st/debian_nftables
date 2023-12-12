@@ -4,6 +4,9 @@ define NTP = { {{ nftables_ntp }} }
 {% if nftables_dns is defined %}
 define DNS = { {{ nftables_dns }} }
 {% endif %}
+{% if nftables_ssh is defined %}
+define SSH = { {{ nftables_ssh }} }
+{% endif %}
 
 # loopback
 add rule ip filter INPUT iifname "lo" counter accept
@@ -18,8 +21,13 @@ add rule ip filter OUTPUT icmp type echo-request ct state new,established limit 
 add rule ip filter INPUT icmp type echo-reply ct state established limit rate 1/second burst 10 packets counter accept comment "ping out"
 
 # ssh in
+{% if nftables_ssh is defined %}
+add rule ip filter INPUT iifname $PIFACE ip saddr $SSH ip daddr $PADDR tcp dport ssh ct state new,established counter accept comment "ssh in"
+add rule ip filter OUTPUT oifname $PIFACE ip daddr $SSH ip saddr $PADDR tcp sport ssh ct state established counter accept comment "ssh in"
+{% else %}
 add rule ip filter INPUT iifname $PIFACE ip daddr $PADDR tcp dport ssh ct state new,established counter accept comment "ssh in"
 add rule ip filter OUTPUT oifname $PIFACE ip saddr $PADDR tcp sport ssh ct state established counter accept comment "ssh in"
+{% endif %}
 
 # ntp out
 {% if nftables_ntp is defined %}
