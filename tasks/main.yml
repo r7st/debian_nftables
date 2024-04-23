@@ -27,74 +27,74 @@
 - name: Configure nftables
   notify: Restart nftables
   block:
-  - name: Create nftables dir
-    ansible.builtin.file:
-      path: /etc/nftables
-      state: directory
-      owner: root
-      group: root
-      mode: "0700"
+    - name: Create nftables dir
+      ansible.builtin.file:
+        path: /etc/nftables
+        state: directory
+        owner: root
+        group: root
+        mode: "0700"
 
-  - name: Configure nftables primary
-    ansible.builtin.template:
-      src: templates/nftables.conf.j2
-      dest: /etc/nftables.conf
-      owner: root
-      group: root
-      mode: "0400"
+    - name: Configure nftables primary
+      ansible.builtin.template:
+        src: templates/nftables.conf.j2
+        dest: /etc/nftables.conf
+        owner: root
+        group: root
+        mode: "0400"
 
-  - name: Nftables definitions
-    ansible.builtin.template:
-      src: templates/nftables.defs.j2
-      dest: /etc/nftables/nftables.defs
-      owner: root
-      group: root
-      mode: "0400"
+    - name: Nftables definitions
+      ansible.builtin.template:
+        src: templates/nftables.defs.j2
+        dest: /etc/nftables/nftables.defs
+        owner: root
+        group: root
+        mode: "0400"
 
-  - name: Block hosts
-    ansible.builtin.template:
-      src: templates/nftables.blocks.j2
-      dest: /etc/nftables/nftables.blocks
-      owner: root
-      group: root
-      mode: "0400"
-    when:
-      - nftables_block_hosts is defined
-      - nftables_block_hosts | length > 0
+    - name: Block hosts
+      ansible.builtin.template:
+        src: templates/nftables.blocks.j2
+        dest: /etc/nftables/nftables.blocks
+        owner: root
+        group: root
+        mode: "0400"
+      when:
+        - nftables_block_hosts is defined
+        - nftables_block_hosts | length > 0
 
-  - name: Standard configuration
-    ansible.builtin.template:
-      src: "templates/{{ item }}.j2"
-      dest: "/etc/nftables/{{ item }}"
-      owner: root
-      group: root
-      mode: "0400"
-    with_items:
-      - nftables.chains
-      - standard.conf
-      - nftables.drops
+    - name: Standard configuration
+      ansible.builtin.template:
+        src: "templates/{{ item }}.j2"
+        dest: "/etc/nftables/{{ item }}"
+        owner: root
+        group: root
+        mode: "0400"
+      with_items:
+        - nftables.chains
+        - standard.conf
+        - nftables.drops
 
-  - name: Custom rules (defined)
-    ansible.builtin.template:
-      src: templates/custom.conf.j2
-      dest: /etc/nftables/custom.conf
-      owner: root
-      group: root
-      mode: "0400"
-    when: (nftables_filter is defined) or
-          (nftables_nat_rules is defined)
+    - name: Custom rules (defined)
+      ansible.builtin.template:
+        src: templates/custom.conf.j2
+        dest: /etc/nftables/custom.conf
+        owner: root
+        group: root
+        mode: "0400"
+      when: (nftables_filter is defined) or
+            (nftables_nat_rules is defined)
 
-  - name: Custom rules (files)
-    ansible.builtin.copy:
-      src: "{{ item }}"
-      dest: "/etc/nftables/{{ item | basename }}"
-      owner: root
-      group: root
-      mode: "0400"
-    with_items: "{{ nftables_custom_config }}"
-    when: 
-      - nftables_custom_config is defined
-      - nftables_custom_config | length > 0
+    - name: Custom rules (files)
+      ansible.builtin.copy:
+        src: "{{ item }}"
+        dest: "/etc/nftables/{{ item | basename }}"
+        owner: root
+        group: root
+        mode: "0400"
+      with_items: "{{ nftables_custom_config }}"
+      when:
+        - nftables_custom_config is defined
+        - nftables_custom_config | length > 0
 
 - name: Start and enable nftables
   ansible.builtin.systemd:
